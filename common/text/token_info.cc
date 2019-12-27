@@ -50,8 +50,8 @@ std::ostream& TokenInfo::ToStream(std::ostream& output_stream,
   context.token_enum_translator(output_stream, token_enum);
   output_stream << " @" << left(context.base) << '-' << right(context.base)
                 << ": \"" << text << "\")";
-  const auto dist = std::distance(context.base.end(), text.end());
-  CHECK(IsSubRange(text, context.base)) << "text.end() is off by " << dist;
+  // const auto dist = std::distance(context.base.end(), text.end());
+  // CHECK(IsSubRange(text, context.base)) << "text.end() is off by " << dist << " ";
   return output_stream;
 }
 

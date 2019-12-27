@@ -368,6 +368,7 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_liblist "liblist"
 %token TK_library "library"
 %token TK_use "use"
+%token TK_as "as"
 /* The new tokens from 1364-2005. */
 %token TK_wone "wone"
 %token TK_uwire "uwire"
@@ -1017,7 +1018,7 @@ block_identifier_opt
 
 interface_class_declaration
   : TK_interface TK_class GenericIdentifier
-    module_parameter_port_list_opt
+    module_or_package_parameter_port_list_opt
     declaration_extends_list_opt ';'  /* multiple base interfaces allowed */
     interface_class_item_list_opt
     TK_endclass label_opt
@@ -1083,7 +1084,7 @@ method_prototype
 
 class_declaration
   : TK_virtual_opt TK_class lifetime_opt GenericIdentifier
-    module_parameter_port_list_opt
+    module_or_package_parameter_port_list_opt
     class_declaration_extends_opt /* only one base type allowed */
     implements_interface_list_opt ';'
     class_items_opt TK_endclass
@@ -2715,10 +2716,13 @@ open_range_list
     { $$ = MakeTaggedNode(N::kOpenRangeList, $1); }
   ;
 package_declaration
-  : TK_package lifetime_opt GenericIdentifier ';'
+  : TK_package lifetime_opt GenericIdentifier
+    module_or_package_parameter_port_list_opt ';'
+    module_or_package_parameter_port_list_opt
     package_item_list_opt
     TK_endpackage label_opt
-    { $$ = MakeTaggedNode(N::kPackageDeclaration, $1, $2, $3, $4, $5, $6, $7); }
+    { $$ = MakeTaggedNode(
+      N::kPackageDeclaration, $1, $2, $3, $4, $5, $6, $7, $8); }
   ;
 module_package_import_list_opt
   : package_import_list
@@ -2735,6 +2739,8 @@ package_import_list
 package_import_declaration
   : TK_import package_import_item_list ';'
     { $$ = MakeTaggedNode(N::kPackageImportDeclaration, $1, $2, $3); }
+  | TK_use GenericIdentifier parameter_value_opt TK_as GenericIdentifier';'
+    { $$ = MakeTaggedNode(N::kPackageUseDeclaration, $1, $2, $3, $4); }
   ;
 package_export_declaration
   : TK_export '*' TK_SCOPE_RES '*' ';'
@@ -4352,8 +4358,8 @@ expression_list_proper
   ;
 
 scope_prefix
-  : GenericIdentifier TK_SCOPE_RES
-    { $$ = MakeTaggedNode(N::kScopePrefix, $1, $2); }
+  : GenericIdentifier parameter_value_opt TK_SCOPE_RES
+    { $$ = MakeTaggedNode(N::kScopePrefix, $1, $2, $3); }
   | TK_Sunit TK_SCOPE_RES
     { $$ = MakeTaggedNode(N::kScopePrefix, $1, $2); }
   ;
@@ -5113,7 +5119,7 @@ module_or_interface_declaration
   : /* attribute_list_opt */
     module_start lifetime_opt symbol_or_label
     module_package_import_list_opt
-    module_parameter_port_list_opt
+    module_or_package_parameter_port_list_opt
     module_port_list_opt
     module_attribute_foreign_opt ';'
     /* local_timeunit_prec_decl_opt */ /* merged into module_item */
@@ -5175,8 +5181,8 @@ module_port_list_opt
   | /* empty */
     { $$ = nullptr; }
   ;
-module_parameter_port_list_opt
-  : '#' '(' module_parameter_port_list ')'
+module_or_package_parameter_port_list_opt
+  : '#' '(' module_or_package_parameter_port_list ')'
   { $$ = MakeTaggedNode(N::kFormalParameterListDeclaration, $1, MakeParenGroup($2, $3, $4)); }
   | '#' '(' ')'
   { $$ = MakeTaggedNode(N::kFormalParameterListDeclaration, $1, MakeParenGroup($2, nullptr, $3)); }
@@ -5192,7 +5198,7 @@ parameter_opt
   | /* empty */
     { $$ = nullptr; }
   ;
-module_parameter_port
+module_or_package_parameter_port
   /* : parameter_opt param_type_opt parameter_assign */
   : parameter_opt param_type_followed_by_id_and_dimensions_opt
     trailing_assign_opt
@@ -5202,7 +5208,7 @@ module_parameter_port
     { $$ = MakeTaggedNode(N::kParamDeclaration, $1, $2, $3); }
   /* type parameter:
    * The EBNF permits a type_assignment_list, however, since both
-   * type_assignment_list and module_parameter_port_list are comma-separated,
+   * type_assignment_list and module_or_package_parameter_port_list are comma-separated,
    * 1-token lookahead is insufficient to decide S/R on ',', thus we limit
    * each type parameter declaration to one assignment.
    * TODO(fangism): Refactor grammar to better allow comma-separated
@@ -5228,32 +5234,32 @@ type_assignment
 
   ;
 
-module_parameter_port_list
+module_or_package_parameter_port_list
   /* expanded to allow preprocessing directives like `ifdef */
-  : module_parameter_port_list_item_last
+  : module_or_package_parameter_port_list_item_last
     { $$ = move($1); }
-  | module_parameter_port_list_preprocessor_last
+  | module_or_package_parameter_port_list_preprocessor_last
     { $$ = move($1); }
   ;
-module_parameter_port_list_trailing_comma
-  : module_parameter_port_list ','
+module_or_package_parameter_port_list_trailing_comma
+  : module_or_package_parameter_port_list ','
     { $$ = ExtendNode($1, $2); }
   ;
-module_parameter_port_list_preprocessor_last
-  : module_parameter_port_list preprocessor_directive
+module_or_package_parameter_port_list_preprocessor_last
+  : module_or_package_parameter_port_list preprocessor_directive
     { $$ = ExtendNode($1, $2); }
-  | module_parameter_port_list_trailing_comma preprocessor_directive
+  | module_or_package_parameter_port_list_trailing_comma preprocessor_directive
     { $$ = ExtendNode($1, $2); }
   | preprocessor_directive
     { $$ = MakeTaggedNode(N::kFormalParameterList, $1); }
   ;
-module_parameter_port_list_item_last
+module_or_package_parameter_port_list_item_last
   /* default value is mandatory */
-  : module_parameter_port_list_trailing_comma module_parameter_port
+  : module_or_package_parameter_port_list_trailing_comma module_or_package_parameter_port
     { $$ = ExtendNode($1, $2); }
-  | module_parameter_port_list_preprocessor_last module_parameter_port
+  | module_or_package_parameter_port_list_preprocessor_last module_or_package_parameter_port
     { $$ = ExtendNode($1, $2); }
-  | module_parameter_port
+  | module_or_package_parameter_port
     { $$ = MakeTaggedNode(N::kFormalParameterList, $1); }
   ;
 

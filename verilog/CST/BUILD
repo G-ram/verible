@@ -9,6 +9,7 @@ package(
     default_visibility = [
         "//verilog/analysis:__subpackages__",
         "//verilog/formatting:__subpackages__",
+        "//verilog/propagate:__subpackages__",
         "//verilog/parser:__subpackages__",
         "//verilog/tools/syntax:__pkg__",  # for printing
     ],

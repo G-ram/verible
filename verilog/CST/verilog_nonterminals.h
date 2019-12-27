@@ -146,6 +146,7 @@ enum class NodeEnum {
   kPrimitiveGateInstance,
   kPrimitiveGateInstanceList,
   kDataDeclaration,
+  kPackageUseDeclaration,
   kPackageImportDeclaration,
   kPackageImportList,
   kPackageImportItem,

@@ -264,6 +264,7 @@ cc_library(
         "//verilog/analysis:__pkg__",
         "//verilog/analysis/checkers:__pkg__",
         "//verilog/formatting:__pkg__",
+        "//verilog/propagate:__pkg__",
         "//verilog/parser:__pkg__",
     ],
 )

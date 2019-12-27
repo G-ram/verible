@@ -501,6 +501,7 @@ instance { UpdateLocation(); return TK_instance; }
 liblist { UpdateLocation(); return TK_liblist; }
 library { UpdateLocation(); return TK_library; }
 use { UpdateLocation(); return TK_use; }
+as { UpdateLocation(); return TK_as; }
 wone { UpdateLocation(); return TK_wone; }
 uwire { UpdateLocation(); return TK_uwire; }
 alias { UpdateLocation(); return TK_alias; }
